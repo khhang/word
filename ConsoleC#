@@ -1,0 +1,325 @@
+/**************************************************************
+* @author   Brian
+* @file     Lab 2 Word List
+* @class    COMPE361
+* @date     September 12, 2015
+* This program reads in the WordList.txt and does string
+* functions such as list all, rhyming, morph, and scrabble
+* words. Program uses 4 different methods in order to process
+* and print the words that are inputted by the user.
+***************************************************************/
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ConsoleApplication2
+{
+    class Program
+    {
+        // Menu function used to display options
+        static void Menu()
+        {
+            Console.WriteLine("Select operation to perform on WordList.txt:");
+            Console.WriteLine("1) List all words \n2) List rhyming words \n3) List scrabble words \n4) List morph words");
+            Console.WriteLine("5) List morph chains\n6) Exit program");
+            Console.Write("Your choice: ");
+        }
+
+        // ListAll is used to print entire text file to console
+        static void ListAll(string[] inputString)
+        {
+            List<string> outList = new List<string>(); // Store inputString into a List structure
+            foreach (string outString in inputString)
+                outList.Add(outString);
+            foreach (string printString in outList)
+                Console.WriteLine("{0}", printString);
+        } // End of static void ListAll(string[] inputString) function
+
+        // ListRhyme will list all words that end in string specified
+        static void ListRhyme(string[] inputString, string t)
+        {
+            int inLength; // Length of input string
+            int outLength; // Length of current output string
+            bool flag; // Will equal true if two characters in string are different
+            List<string> outList = new List<string>(); // Store inputString into a List structure
+            foreach (string outString in inputString)
+                outList.Add(outString);
+            // This section of function will take the length of the current string
+            // and the length of the user input string and compare them. If the
+            // user string can fit within the current string, then a comparison
+            // from the last characters of both strings will begin. If all characters
+            // match between the two strings, then it will be printed.
+            for(int i = 0; i < outList.Count; i++){
+                inLength = t.Length;
+                outLength = outList[i].Length;
+                flag = false;
+                if (inLength <= outLength)
+                {
+                    do // do-while loop used to decrement length and prevent null exception
+                    {
+                        inLength--;
+                        outLength--;
+                        if (outList[i][outLength] != t[inLength])
+                            flag = true; // if a character does not equal, string is flagged and will not be printed
+                    } while (inLength > 0 && outList[i][outLength] == t[inLength]);
+
+                    if (!flag)
+                        Console.WriteLine("{0}", outList[i]);
+                }
+            }
+
+        } // End of static void ListRhyme(string[] inputString, string t) function
+
+        // ListMorph will list words that are less than one letter off from user input
+        static void ListMorph(string[] inputString, string t)
+        {
+            int inLength; // Length of user input string
+            int outLength; // Length of output string
+            int flag; // Flag for unequal character
+            int i; // Counter variable
+            List<string> outList = new List<string>(); // Store inputString into a List structure
+            foreach (string outString in inputString)
+                outList.Add(outString);
+
+            // This section of the function will see if the two words being
+            // compared are equal in length before checking each character 
+            // and seeing if they differ by only one letter. If they fit the
+            // requirements of being a morph word, they will be printed on screen
+            for(int j = 0; j < outList.Count; j++)
+            {
+                // Initialize variables for every string
+                i = 0;
+                flag = 0;
+                inLength = t.Length;
+                outLength = outList[j].Length;
+
+                // Comparison for each string to input t
+                if (inLength == outLength)
+                {
+                    while (i < inLength)
+                    {
+                        if (outList[j][i] != t[i]) // Increment flag if char doesnt match
+                            flag++;
+                        i++;
+                    }
+
+                    // Will print if the word differs by only one letter
+                    if (flag == 1)
+                        Console.WriteLine("{0}", outList[j]);
+                }
+            }
+
+
+        } // End of ListMorph(string[] inputString, string t) function
+
+        static void ListScrabble(string[] inputString, string t)
+        {
+            int inLength; // Length of user input string
+            int outLength; // Length of output string
+            int flag; // Used to check if valid for printing
+            int i; // Counter for inputString and outString respectively
+            int j;
+            List<string> outList = new List<string>(); // Store inputString into a List structure
+            foreach (string outString in inputString)
+                outList.Add(outString);
+
+            // This section of the function creates two int arrays that are
+            // the size of the output string and the user input string.
+            // These arrays are marked by the index in which the letters are found.
+            // Once a letter is marked, it may not be used again for a comparison.
+            // All letters in the output string must be marked before it can be printed. 
+            for(int k = 0; k < outList.Count; k++)
+            {
+                flag = 0;
+                j = 0;
+                inLength = t.Length;
+                outLength = outList[k].Length;
+                int[] inCheck = new int[inLength]; // Declared as new arrays for garbage collection
+                int[] outCheck = new int[outLength];
+
+                if (inLength >= outLength && outLength > 1)
+                {
+                    while (j < outLength)
+                    {
+                        i = 0; // i resets for every letter in the output string
+                        while (i < inLength)
+                        {
+                            if (outList[k][j] == t[i] && inCheck[i] == 0) // letters exist in both strings and hasnt been marked
+                            {
+                                inCheck[i] = 1;
+                                outCheck[j] = 1;
+                                i = inLength; // Breaks out of while loop for next letter
+                            }
+                            i++;
+                        }
+                        j++;
+                    }
+                    // For loop that checks if every letter in output exists in input string
+                    for (j = 0; j < outLength; j++)
+                    {
+                        if (outCheck[j] == 0)
+                            flag = 1;
+                    }
+
+                    if (flag == 0)
+                        Console.WriteLine("{0}", outList[k]);
+
+                }
+            }
+        } // End of static void ListScrabble(string[] inputString, string t) function
+
+
+        static void MorphAdd(List<string> list, string[] inputString, string t){
+            int inLength; // Length of user input string
+            int outLength; // Length of output string
+            int flag; // Flag for unequal character
+            int i; // Counter variable
+
+            // This section of the function will see if the two words being
+            // compared are equal in length before checking each character 
+            // and seeing if they differ by only one letter. If they fit the
+            // requirements of being a morph word, they will be printed on screen
+            foreach (string outString in inputString)
+            {
+                // Initialize variables for every string
+                i = 0;
+                flag = 0;
+                inLength = t.Length;
+                outLength = outString.Length;
+
+                // Comparison for each string to input t
+                if (inLength == outLength)
+                {
+                    while (i < inLength)
+                    {
+                        if (outString[i] != t[i])
+                            flag++;
+                        i++;
+                    }
+
+                    // Will add to list if the word differs by only one letter
+                    if (flag == 1)
+                        list.Add(outString);
+                }
+            }
+        }
+
+        static bool MorphChain(string[] inputString, List<string> log, string t, string end, int max)
+        {
+            if (max < 1) // Will not find chain if the max number is 0 or negative
+            { 
+                return false;
+            } else if(t == end)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Inputs are the same.");
+                Console.ResetColor();
+            }
+            int i; // Index for morphs
+            List<string> morphList = new List<string>(); // New list with input word in it
+            morphList.Add(t);
+
+            log.Add(t); // Log the word into another list
+            MorphAdd(morphList, inputString, t); // Add the morphs of the word to the string
+
+            for (i = 0; i < log.Count; i++) // Goes through the words in the log and removes them from the chain
+                morphList.Remove(log[i]);
+
+            for(i = 0; i < morphList.Count; i++) // Goes through list of morph words from input t
+            {
+                if(morphList[i] == end) // If any words is the end word, then it is printed and is returned
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("{0}",morphList[i]);
+                    Console.ResetColor();
+                    return true;
+                }
+            }
+
+            // Will enter this loop if no word is found so far
+            for(i = 0; i < morphList.Count; i++)
+            {   // If this if statement is true, it means a match was found, so print and exit recursion
+                if(MorphChain(inputString, log, morphList[i], end, max - 1))
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("{0}",morphList[i]);
+                    Console.ResetColor();
+                    return true;
+                }
+            }
+
+            // If made it here, no morph was found
+            return false;
+
+        }
+
+
+        // Main
+        static void Main(string[] args)
+        {
+            Console.Title = "Brian Pham Lab 3 - COMPE361";
+            int input; // User input for options
+            string[] text = System.IO.File.ReadAllLines("WordList.txt");
+
+            do
+            {
+                // Prints menu and takes user input
+                Menu();
+                input = Convert.ToInt32(Console.ReadLine());
+                Console.Clear();
+
+                // All cases for the input
+                switch (input)
+                {
+                    case 1:
+                        ListAll(text);
+                        break;
+                    case 2:
+                        Console.Write("Input word to find rhyme: ");
+                        ListRhyme(text, Console.ReadLine());
+                        break;
+                    case 3:
+                        Console.Write("Input word to find scrabble words: ");
+                        ListScrabble(text, Console.ReadLine());
+                        break;
+                    case 4:
+                        Console.Write("Input word to find morph words: ");
+                        ListMorph(text, Console.ReadLine());
+                        break;
+                    case 5:
+                        List<string> logList = new List<string>(); // List used for Morph Chain function
+                        Console.Write("Input start word: ");
+                        string start = Console.ReadLine();
+                        Console.Write("Input end word: ");
+                        string last = Console.ReadLine();
+                        Console.Write("Input maximum chain length: ");
+                        string maxLength = Console.ReadLine();
+                        int intMax;
+                        Int32.TryParse(maxLength, out intMax);
+                        Console.WriteLine("");
+                        if (MorphChain(text, logList, last, start, intMax))
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("\n{0}", last);
+                            Console.ResetColor();
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Morph Chain could not be found");
+                            Console.ResetColor();
+                        }
+                        break;
+                    case 6:
+                        Console.WriteLine("Exiting the program");
+                        break;
+                }
+                Console.ReadLine();
+                Console.Clear();
+            } while (input != 6);
+        }
+    }
+}

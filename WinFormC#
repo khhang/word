@@ -1,0 +1,343 @@
+using System;
+using System.IO;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Resources;
+
+namespace WindowsFormsApplication1
+{
+    public partial class Form1 : Form
+    {
+        // Reads resource file and splits it into new lines and stores in string array
+        string[] text = Properties.Resources.WordList_txt.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+
+        public Form1()
+        {
+            InitializeComponent();
+
+            // Show entire list once form opens
+            listBox1.BeginUpdate();
+            foreach (string input in text)
+                listBox1.Items.Add(input);
+            listBox1.EndUpdate();
+
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void enter_Click(object sender, EventArgs e)
+        {
+            errorLabel.Text = ""; // Empties error label
+            try {
+                List<string> displayList = new List<string>(); // Display for the listbox
+                if (rhymeBtn.Checked == true) // Rhyme section
+                {
+                    foreach (string s in text)
+                    {
+                        if (s.EndsWith(textBox1.Text))
+                        {
+                            displayList.Add(s); // Add to displayList if matches criteria for current option
+                        }
+                    }
+                    listBox1.DataSource = displayList;
+                }
+                else if (scrabbleBtn.Checked == true) // Scrabble section
+                {
+                    listBox1.DataSource = ListScrabble(textBox1.Text, displayList);
+                }
+                else if (morphBtn.Checked == true) // Morph section
+                {
+                    listBox1.DataSource = ListMorph(textBox1.Text, displayList);
+                }
+                else if (morphChainBtn.Checked == true) // Morph section
+                {
+                    List<string> logList = new List<string>();
+                    if (MorphChain(text, logList, displayList, textBox2.Text, textBox1.Text, int.Parse(maxBox.Text), 1)) // Morph chain section
+                    {
+                        displayList.Add(textBox2.Text); // Adds start word to list
+                        listBox1.DataSource = displayList; // List box will display words in displayList
+                    }
+                    else
+                    {
+                        listBox1.DataSource = displayList;
+                    }
+                }
+                if (rhymeBtn.Checked == false && scrabbleBtn.Checked == false && morphBtn.Checked == false && morphChainBtn.Checked == false)
+                    errorLabel.Text = "*Please select an option";
+                else if (displayList.Count == 0)
+                    errorLabel.Text = "*No words found";
+            }
+            catch
+            {
+                errorLabel.Text = "*Invalid inputs! Please try again.";
+            }
+        }
+
+        private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            errorLabel.Text = ""; // Empties error label
+            List<string> displayList = new List<string>(); // Display for the listbox
+            try {
+                if (rhymeBtn.Checked == true && (e.KeyChar == (char)Keys.Enter)) // Rhyme section
+                {
+                    foreach (string s in text)
+                    {
+                        if (s.EndsWith(textBox1.Text))
+                        {
+                            displayList.Add(s); // Add to displayList if matches criteria for current option
+                        }
+                    }
+                    listBox1.DataSource = displayList;
+                }
+                else if (scrabbleBtn.Checked == true && (e.KeyChar == (char)Keys.Enter)) // Scrabble section
+                {
+                    listBox1.DataSource = ListScrabble(textBox1.Text, displayList);
+                }
+                else if (morphBtn.Checked == true && (e.KeyChar == (char)Keys.Enter)) // Morph section
+                {
+                    listBox1.DataSource = ListMorph(textBox1.Text, displayList);
+                }
+                else if (morphChainBtn.Checked == true && (e.KeyChar == (char)Keys.Enter)) // Morph chain section chain
+                {
+                    List<string> logList = new List<string>();
+                    if (MorphChain(text, logList, displayList, textBox2.Text, textBox1.Text, int.Parse(maxBox.Text), 1))
+                    {
+                        displayList.Add(textBox2.Text); // If word is found, print start word and the list
+                        listBox1.DataSource = displayList;
+                    }
+                    else
+                    {
+                        listBox1.DataSource = displayList; // If no words found, empty
+                    }
+                }
+                if (displayList.Count == 0 && (e.KeyChar == (char)Keys.Enter))
+                    errorLabel.Text = "*No words found";
+            }
+            catch
+            {
+                errorLabel.Text = "*Invalid inputs! Please try again.";
+            }
+        }
+
+        List<string> ListMorph(string t, List<string> outList)
+        {
+            int inLength; // Length of user input string
+            int outLength; // Length of output string
+            int flag; // Flag for unequal character
+            int i; // Counter variable
+
+            // This section of the function will see if the two words being
+            // compared are equal in length before checking each character 
+            // and seeing if they differ by only one letter. If they fit the
+            // requirements of being a morph word, they will be printed on screen
+            for (int j = 0; j < text.Length; j++)
+            {
+                // Initialize variables for every string
+                i = 0;
+                flag = 0;
+                inLength = t.Length;
+                outLength = text[j].Length;
+
+                // Comparison for each string to input t
+                if (inLength == outLength)
+                {
+                    while (i < inLength)
+                    {
+                        if (text[j][i] != t[i]) // Increment flag if char doesnt match
+                            flag++;
+                        i++;
+                    }
+
+                    // Will print if the word differs by only one letter
+                    if (flag == 1)
+                        outList.Add(text[j]);
+                }
+            }
+            return outList;
+        } // End of ListMorph
+
+        List<string> ListScrabble(string t, List<string> outList)
+        {
+            int inLength; // Length of user input string
+            int outLength; // Length of output string
+            int flag; // Used to check if valid for printing
+            int i; // Counter for inputString and outString respectively
+            int j;
+
+            // This section of the function creates two int arrays that are
+            // the size of the output string and the user input string.
+            // These arrays are marked by the index in which the letters are found.
+            // Once a letter is marked, it may not be used again for a comparison.
+            // All letters in the output string must be marked before it can be printed. 
+            for (int k = 0; k < text.Length; k++)
+            {
+                flag = 0;
+                j = 0;
+                inLength = t.Length;
+                outLength = text[k].Length;
+                int[] inCheck = new int[inLength]; // Declared as new arrays for garbage collection
+                int[] outCheck = new int[outLength];
+
+                if (inLength >= outLength && outLength > 1)
+                {
+                    while (j < outLength)
+                    {
+                        i = 0; // i resets for every letter in the output string
+                        while (i < inLength)
+                        {
+                            if (text[k][j] == t[i] && inCheck[i] == 0) // letters exist in both strings and hasnt been marked
+                            {
+                                inCheck[i] = 1;
+                                outCheck[j] = 1;
+                                i = inLength; // Breaks out of while loop for next letter
+                            }
+                            i++;
+                        }
+                        j++;
+                    }
+                    // For loop that checks if every letter in output exists in input string
+                    for (j = 0; j < outLength; j++)
+                    {
+                        if (outCheck[j] == 0)
+                            flag = 1;
+                    }
+
+                    if (flag == 0)
+                        outList.Add(text[k]);
+
+                }
+            }
+            return outList;
+        } // End of ListScrabble
+
+        void MorphAdd(List<string> list, string[] inputString, string t)
+        {
+            int inLength; // Length of user input string
+            int outLength; // Length of output string
+            int flag; // Flag for unequal character
+            int i; // Counter variable
+
+            // This section of the function will see if the two words being
+            // compared are equal in length before checking each character 
+            // and seeing if they differ by only one letter. If they fit the
+            // requirements of being a morph word, they will be printed on screen
+            foreach (string outString in inputString)
+            {
+                // Initialize variables for every string
+                i = 0;
+                flag = 0;
+                inLength = t.Length;
+                outLength = outString.Length;
+
+                // Comparison for each string to input t
+                if (inLength == outLength)
+                {
+                    while (i < inLength)
+                    {
+                        if (outString[i] != t[i])
+                            flag++;
+                        i++;
+                    }
+
+                    // Will add to list if the word differs by only one letter
+                    if (flag == 1)
+                        list.Add(outString);
+                }
+            }
+        } // End of MorphAdd
+
+        bool MorphChain(string[] inputString, List<string> log, List<string> outList, string t, string end, int max, int count)
+        {
+            int counter = count; // Increments so we do not exceed max chain length
+            if (max < 1 || count == max) // Will not find chain if the max number is 0 or negative
+            {
+                return false;
+            }
+            else if (t == end)
+            {
+                errorLabel.Text = "*Both strings are the same";
+            }
+            int i; // Index for morphs
+            List<string> morphList = new List<string>(); // New list with input word in it
+            morphList.Add(t);
+
+            log.Add(t); // Log the word into another list
+            MorphAdd(morphList, inputString, t); // Add the morphs of the word to the string
+
+            for (i = 0; i < log.Count; i++) // Goes through the words in the log and removes them from the chain
+                morphList.Remove(log[i]);
+
+            for (i = 0; i < morphList.Count; i++) // Goes through list of morph words from input t
+            {
+                if (morphList[i] == end) // If any words is the end word, then it is printed and is returned
+                {
+                    outList.Add(morphList[i]);
+                    return true;
+                }
+            }
+
+            // Will enter this loop if no word is found so far
+            for (i = 0; i < morphList.Count; i++)
+            {   // If this if statement is true, it means a match was found, so print and exit recursion
+                if (MorphChain(inputString, log, outList, morphList[i], end, max, counter + 1))
+                {
+                    outList.Add(morphList[i]);
+                    return true;
+                }
+            }
+
+            // If made it here, no morph was found
+            return false;
+        }
+
+        private void morph_CheckedChanged(object sender, EventArgs e)
+        {
+            // Options for morph chain will appear when radio button is checked
+            if(morphChainBtn.Checked == true)
+            {
+                wLabel2.Show();
+                textBox2.Show();
+                maxLabel.Show();
+                maxBox.Show();
+            } else
+            {
+                wLabel2.Hide();
+                textBox2.Hide();
+                maxLabel.Hide();
+                maxBox.Hide();
+            }
+        }
+
+        private void textBox2_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            textBox1_KeyPress(sender, e);
+        }
+
+        private void maxBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            textBox1_KeyPress(sender, e);
+        }
+
+        private void resetBtn_Click(object sender, EventArgs e)
+        {
+            List<string> displayList = new List<string>(); // Creates new list to display
+            foreach (string s in text) // Populate display list with text file contents
+                displayList.Add(s);
+            listBox1.DataSource = displayList; // Change source of listbox to display the list
+        }
+
+        private void helpBtn_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("1. Select an option\n2. Fill out text fields\n3. Press enter or Go!");
+        }
+    }
+}
